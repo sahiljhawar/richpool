@@ -1,4 +1,5 @@
 from richpool.functional import p_imap, p_map, p_uimap, p_umap, t_imap, t_map
+from richpool.joblib import JoblibPool
 from richpool.multi import MultiPool
 from richpool.pool import BasePool
 from richpool.serial import SerialPool
@@ -10,6 +11,7 @@ __all__ = [
     "BasePool",
     "SerialPool",
     "MultiPool",
+    "JoblibPool",
     "p_map",
     "p_imap",
     "p_umap",
