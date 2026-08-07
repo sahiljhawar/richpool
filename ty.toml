@@ -1,0 +1,7 @@
+[environment]
+python-version = "3.11"
+root = ["src"]
+
+[src]
+include = ["src", "tests", "examples"]
+exclude = ["build", "**/__pycache__"]

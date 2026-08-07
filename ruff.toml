@@ -1,0 +1,30 @@
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "examples"]
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "D",   # pydocstyle
+]
+ignore = [
+    "E501", # line length handled by formatter
+]
+
+[lint.isort]
+known-first-party = ["richpool"]
+
+[lint.pydocstyle]
+convention = "numpy"
+
+[lint.per-file-ignores]
+"tests/*" = ["D"]
+"examples/*" = ["D"]
+
+[format]
+quote-style = "double"
