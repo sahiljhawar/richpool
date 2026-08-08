@@ -21,7 +21,7 @@ __all__ = ["MPIPool"]
 # Imported lazily (only when an MPIPool is actually constructed or `enabled()` is
 # probed) because `import mpi4py.MPI` calls MPI_Init() as a side effect. That
 # initializes MPI process-wide, which is incompatible with later spawning a
-# fresh, unrelated `mpiexec` job from this same process -- so importing it
+# fresh, unrelated `mpiexec` job from this same process. Importing it
 # unconditionally at module load time would break MultiPool/JoblibPool users
 # who never touch MPIPool, and would break any code that itself shells out to
 # mpiexec after merely importing richpool.
@@ -50,8 +50,8 @@ def _print_progress_line(console: Console, progress) -> None:
     mpiexec/mpirun forward each rank's output line-by-line rather than byte-by-byte,
     so a normal rich ``Live`` display (which redraws in place via ``\\r``, only ever
     emitting a real newline once the bar completes) sits fully buffered until the
-    whole run finishes. Printing one complete, flushed line per update sidesteps that
-    -- it trades in-place redraw for a scrolling log of styled lines, but it's the
+    whole run finishes. Printing one complete, flushed line per update sidesteps that:
+    it trades in-place redraw for a scrolling log of styled lines, but it's the
     only way to get live feedback under mpiexec.
     """
     with console.capture() as capture:
@@ -64,18 +64,33 @@ class MPIPool(BasePool):
     """A processing pool that distributes tasks using MPI, with a rich progress bar on the master.
 
     MPI messages are serialized with ``dill`` rather than the standard library's
-    ``pickle`` (via ``MPI.pickle.__init__``, process-wide) -- mpi4py's default
+    ``pickle`` (via ``MPI.pickle.__init__``, process-wide), since mpi4py's default
     pickling can't send lambdas, closures, or locally-defined functions as the
-    worker function; ``dill`` can, matching what `MultiPool`/`JoblibPool` already
+    worker function. ``dill`` can, matching what `MultiPool`/`JoblibPool` already
     support via pathos/joblib.
 
     Parameters
     ----------
     comm : mpi4py.MPI.Comm, optional
         An MPI communicator to distribute tasks with. Defaults to ``MPI.COMM_WORLD``.
+    processes : int, optional
+        Not used by `MPIPool`. The number of workers is fixed by how many MPI
+        ranks the script was launched with (``mpiexec -n N``). Accepted so
+        `choose_pool()` can construct any pool backend with the same call.
+    initializer : callable, optional
+        Not used by `MPIPool`. Accepted for the same reason.
+    initargs : tuple, optional
+        Not used by `MPIPool`. Accepted for the same reason.
     """
 
-    def __init__(self, comm: Any = None):
+    def __init__(
+        self,
+        comm: Any = None,
+        processes: int | None = None,
+        initializer: Callable | None = None,
+        initargs: tuple | None = None,
+        **_: Any,
+    ):
         super().__init__()
         self._mpi = _import_mpi()
 
@@ -186,12 +201,12 @@ class MPIPool(BasePool):
         pending = len(tasklist)
 
         # A normal `with make_progress(...) as progress:` live display doesn't work
-        # here -- see `_print_progress_line`'s docstring. Instead, build the Progress
+        # here, see `_print_progress_line`'s docstring. Instead, build the Progress
         # renderer without starting its Live display, and print one flushed line per
         # update. Printing on every single completed item would flood the output for
         # large item counts, so updates are throttled to roughly one print per worker
-        # (`self.size`) -- a bounded number of lines regardless of how many items
-        # there are -- always including the final, 100% line.
+        # (`self.size`), a bounded number of lines regardless of how many items
+        # there are, always including the final, 100% line.
         console = Console(file=sys.stderr, force_terminal=True)
         progress = make_progress(disable=disable, console=console)
         task_id = progress.add_task(desc, total=total)

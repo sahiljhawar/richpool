@@ -47,6 +47,9 @@ class MultiPool(BasePool):
         Invoked by each worker process when it starts.
     initargs : iterable, optional
         Arguments for ``initializer``.
+    comm : mpi4py.MPI.Comm, optional
+        Not used by `MultiPool`. Accepted so `choose_pool()` can construct any
+        pool backend with the same call, regardless of which one gets picked.
     """
 
     wait_timeout = 3600
@@ -56,6 +59,7 @@ class MultiPool(BasePool):
         processes: int | None = None,
         initializer: Callable | None = None,
         initargs: tuple = (),
+        comm: Any = None,
         **kwargs: Any,
     ):
         super().__init__()

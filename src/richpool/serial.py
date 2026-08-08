@@ -12,12 +12,30 @@ __all__ = ["SerialPool"]
 
 
 class SerialPool(BasePool):
-    """A serial pool that wraps the built-in ``map`` function with a rich progress bar."""
+    """A serial pool that wraps the built-in ``map`` function with a rich progress bar.
 
-    def __init__(self, **_: Any):
+    Parameters
+    ----------
+    processes : int, optional
+        Not used by `SerialPool`. Accepted so `choose_pool()` can construct any
+        pool backend with the same call, regardless of which one gets picked.
+    initializer : callable, optional
+        Not used by `SerialPool`. Accepted for the same reason.
+    initargs : tuple, optional
+        Not used by `SerialPool`. Accepted for the same reason.
+    comm : mpi4py.MPI.Comm, optional
+        Not used by `SerialPool`. Accepted for the same reason.
+    """
+
+    def __init__(
+        self,
+        processes: int | None = None,
+        initializer: Callable | None = None,
+        initargs: tuple | None = None,
+        comm: Any = None,
+        **_: Any,
+    ):
         super().__init__()
-        self.size = 0
-        self.rank = 0
 
     @staticmethod
     def enabled() -> bool:

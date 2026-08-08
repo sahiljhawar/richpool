@@ -14,16 +14,33 @@ __all__ = ["JoblibPool"]
 class JoblibPool(BasePool):
     """A processing pool that distributes tasks using ``joblib.Parallel``, with a rich progress bar.
 
-    All constructor arguments and keyword arguments are passed directly to
-    ``joblib.Parallel.__init__`` (e.g. ``n_jobs``, ``backend``, ``prefer``).
+    Parameters
+    ----------
+    processes : int, optional
+        The number of worker processes to use, passed to ``joblib.Parallel`` as
+        ``n_jobs``. Defaults to joblib's own default.
+    initializer : callable, optional
+        Not used by `JoblibPool`. Accepted so `choose_pool()` can construct any
+        pool backend with the same call, regardless of which one gets picked.
+    initargs : tuple, optional
+        Not used by `JoblibPool`. Accepted for the same reason.
+    comm : mpi4py.MPI.Comm, optional
+        Not used by `JoblibPool`. Accepted for the same reason.
+    **kwargs
+        Additional keyword arguments passed directly to ``joblib.Parallel.__init__``
+        (e.g. ``backend``, ``prefer``).
     """
 
-    def __init__(self, *args: Any, **kwargs: Any):
+    def __init__(
+        self,
+        processes: int | None = None,
+        initializer: Callable | None = None,
+        initargs: tuple | None = None,
+        comm: Any = None,
+        **kwargs: Any,
+    ):
         super().__init__()
-        self.args = args
-        self.kwargs = kwargs
-        self.size = 0
-        self.rank = 0
+        self.kwargs = {"n_jobs": processes, **kwargs}
 
     @staticmethod
     def enabled() -> bool:
@@ -63,7 +80,7 @@ class JoblibPool(BasePool):
 
         kwargs = dict(self.kwargs)
         kwargs["return_as"] = "generator"
-        parallel = Parallel(*self.args, **kwargs)
+        parallel = Parallel(**kwargs)
 
         results = []
         with make_progress(disable=disable) as progress:
