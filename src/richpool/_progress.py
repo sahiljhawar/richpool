@@ -13,8 +13,7 @@ from rich.progress import (
 
 
 def make_progress(disable: bool = False) -> Progress:
-    """Builds a rich Progress instance with p_tqdm-like columns."""
-
+    """Build a rich Progress instance with p_tqdm-like columns."""
     return Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),

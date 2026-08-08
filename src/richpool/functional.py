@@ -73,22 +73,22 @@ def _parallel(
 
 
 def p_map(function: Callable, *iterables: Iterable, **kwargs: Any) -> list[Any]:
-    """Performs a parallel ordered map with a rich progress bar."""
+    """Perform a parallel ordered map with a rich progress bar."""
     return list(_parallel(True, function, *iterables, **kwargs))
 
 
 def p_imap(function: Callable, *iterables: Iterable, **kwargs: Any) -> Generator:
-    """Returns a generator for a parallel ordered map with a rich progress bar."""
+    """Return a generator for a parallel ordered map with a rich progress bar."""
     return _parallel(True, function, *iterables, **kwargs)
 
 
 def p_umap(function: Callable, *iterables: Iterable, **kwargs: Any) -> list[Any]:
-    """Performs a parallel unordered map with a rich progress bar."""
+    """Perform a parallel unordered map with a rich progress bar."""
     return list(_parallel(False, function, *iterables, **kwargs))
 
 
 def p_uimap(function: Callable, *iterables: Iterable, **kwargs: Any) -> Generator:
-    """Returns a generator for a parallel unordered map with a rich progress bar."""
+    """Return a generator for a parallel unordered map with a rich progress bar."""
     return _parallel(False, function, *iterables, **kwargs)
 
 
@@ -105,10 +105,10 @@ def _sequential(function: Callable, *iterables: Iterable, **kwargs: Any) -> Gene
 
 
 def t_map(function: Callable, *iterables: Iterable, **kwargs: Any) -> list[Any]:
-    """Performs a sequential map with a rich progress bar."""
+    """Perform a sequential map with a rich progress bar."""
     return list(_sequential(function, *iterables, **kwargs))
 
 
 def t_imap(function: Callable, *iterables: Iterable, **kwargs: Any) -> Generator:
-    """Returns a generator for a sequential map with a rich progress bar."""
+    """Return a generator for a sequential map with a rich progress bar."""
     return _sequential(function, *iterables, **kwargs)

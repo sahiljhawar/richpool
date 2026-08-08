@@ -14,15 +14,19 @@ class BasePool(metaclass=abc.ABCMeta):
 
     @staticmethod
     def enabled() -> bool:
+        """Return whether this pool backend is available on the current system."""
         return False
 
     def is_master(self) -> bool:
+        """Return whether this process is the pool's master (rank 0)."""
         return self.rank == 0
 
     def is_worker(self) -> bool:
+        """Return whether this process is a worker (rank != 0)."""
         return self.rank != 0
 
     def wait(self) -> None:
+        """Block until the master dispatches work. No-op by default; overridden by worker-based pools."""
         return
 
     @abc.abstractmethod
@@ -40,7 +44,9 @@ class BasePool(metaclass=abc.ABCMeta):
         """Release any resources held by the pool. No-op by default; override if needed."""
 
     def __enter__(self) -> "BasePool":
+        """Return self, enabling use as a context manager."""
         return self
 
     def __exit__(self, *args: Any) -> None:
+        """Close the pool when the context manager exits."""
         self.close()

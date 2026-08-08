@@ -67,6 +67,7 @@ class MultiPool(BasePool):
 
     @staticmethod
     def enabled() -> bool:
+        """Return True; the multiprocessing pool is always available."""
         return True
 
     def map(
@@ -77,6 +78,26 @@ class MultiPool(BasePool):
         chunksize: int | None = None,
         **kwargs,
     ) -> list:
+        """Apply `func` to `iterable` across the pool's worker processes.
+
+        Parameters
+        ----------
+        func : callable
+            Function to apply to each item.
+        iterable : iterable
+            Items to process.
+        callback : callable, optional
+            Called with each result as it completes.
+        chunksize : int, optional
+            Number of items dispatched to a worker at a time.
+        **kwargs
+            ``desc``, ``total``, and ``disable`` control the progress bar.
+
+        Returns
+        -------
+        list
+            Results in the same order as `iterable`.
+        """
         desc: str = kwargs.pop("desc", "")
         total: int | None = kwargs.pop("total", None)
         disable: bool = kwargs.pop("disable", False)
@@ -102,12 +123,15 @@ class MultiPool(BasePool):
                     raise
 
     def close(self) -> None:
+        """Close the underlying process pool and release its workers."""
         self._pool.close()
         self._pool.join()
         self._pool.clear()
 
     def terminate(self) -> None:
+        """Terminate the underlying process pool immediately."""
         self._pool.terminate()
 
     def join(self) -> None:
+        """Wait for the underlying process pool's worker processes to exit."""
         self._pool.join()

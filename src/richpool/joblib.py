@@ -27,6 +27,7 @@ class JoblibPool(BasePool):
 
     @staticmethod
     def enabled() -> bool:
+        """Return whether joblib is installed."""
         return Parallel is not None
 
     def map(
@@ -36,6 +37,24 @@ class JoblibPool(BasePool):
         callback: Callable | None = None,
         **kwargs,
     ) -> list:
+        """Apply `func` to `iterable` via `joblib.Parallel`, ticking the bar as results arrive.
+
+        Parameters
+        ----------
+        func : callable
+            Function to apply to each item.
+        iterable : iterable
+            Items to process.
+        callback : callable, optional
+            Called with each result as it completes.
+        **kwargs
+            ``desc``, ``total``, and ``disable`` control the progress bar.
+
+        Returns
+        -------
+        list
+            Results in the same order as `iterable`.
+        """
         desc: str = kwargs.pop("desc", "")
         total: int | None = kwargs.pop("total", None)
         disable: bool = kwargs.pop("disable", False)

@@ -88,6 +88,7 @@ class MPIPool(BasePool):
 
     @staticmethod
     def enabled() -> bool:
+        """Return whether mpi4py is installed and more than one MPI rank is running."""
         mpi = MPI
         if mpi is None:
             mpi = _import_mpi(quiet=True)
@@ -120,7 +121,25 @@ class MPIPool(BasePool):
         callback: Callable | None = None,
         **kwargs,
     ) -> list[Any] | None:  # ty:ignore[invalid-method-override]
+        """Dispatch `func` over `iterable` to MPI worker ranks; only the master returns results.
 
+        Parameters
+        ----------
+        func : callable
+            Function to apply to each item.
+        iterable : iterable
+            Items to process.
+        callback : callable, optional
+            Called on the master with each result as it completes.
+        **kwargs
+            ``desc``, ``total``, and ``disable`` control the progress bar.
+
+        Returns
+        -------
+        list or None
+            Results in the same order as `iterable` on the master process;
+            `None` on worker processes.
+        """
         desc: str = kwargs.pop("desc", "")
         total: int | None = kwargs.pop("total", None)
         disable: bool = kwargs.pop("disable", False)

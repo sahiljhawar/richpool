@@ -24,7 +24,6 @@ def choose_pool(
     **kwargs
         Additional keyword arguments passed through to the selected pool's constructor.
     """
-
     if mpi:
         from richpool.mpi import MPIPool
 
