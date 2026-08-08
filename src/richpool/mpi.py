@@ -63,6 +63,12 @@ def _print_progress_line(console: Console, progress) -> None:
 class MPIPool(BasePool):
     """A processing pool that distributes tasks using MPI, with a rich progress bar on the master.
 
+    MPI messages are serialized with ``dill`` rather than the standard library's
+    ``pickle`` (via ``MPI.pickle.__init__``, process-wide) -- mpi4py's default
+    pickling can't send lambdas, closures, or locally-defined functions as the
+    worker function; ``dill`` can, matching what `MultiPool`/`JoblibPool` already
+    support via pathos/joblib.
+
     Parameters
     ----------
     comm : mpi4py.MPI.Comm, optional
@@ -72,6 +78,10 @@ class MPIPool(BasePool):
     def __init__(self, comm: Any = None):
         super().__init__()
         self._mpi = _import_mpi()
+
+        import dill
+
+        self._mpi.pickle.__init__(dill.dumps, dill.loads)
 
         if comm is None:
             comm = self._mpi.COMM_WORLD
@@ -178,10 +188,15 @@ class MPIPool(BasePool):
         # A normal `with make_progress(...) as progress:` live display doesn't work
         # here -- see `_print_progress_line`'s docstring. Instead, build the Progress
         # renderer without starting its Live display, and print one flushed line per
-        # update.
+        # update. Printing on every single completed item would flood the output for
+        # large item counts, so updates are throttled to roughly one print per worker
+        # (`self.size`) -- a bounded number of lines regardless of how many items
+        # there are -- always including the final, 100% line.
         console = Console(file=sys.stderr, force_terminal=True)
         progress = make_progress(disable=disable, console=console)
         task_id = progress.add_task(desc, total=total)
+        print_every = max(1, -(-len(items) // self.size))
+        completed = 0
 
         while pending:
             if workerset and tasklist:
@@ -203,12 +218,14 @@ class MPIPool(BasePool):
 
             user_callback(result)
             progress.advance(task_id)
-            if not disable:
-                _print_progress_line(console, progress)
 
             workerset.add(worker)
             resultlist[taskid] = result
             pending -= 1
+            completed += 1
+
+            if not disable and (completed % print_every == 0 or pending == 0):
+                _print_progress_line(console, progress)
 
         return resultlist
 
