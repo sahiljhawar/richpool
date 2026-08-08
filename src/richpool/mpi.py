@@ -11,6 +11,8 @@ import traceback
 from collections.abc import Callable, Iterable
 from typing import Any
 
+from rich.console import Console
+
 from richpool._progress import make_progress, resolve_total
 from richpool.pool import BasePool
 
@@ -40,6 +42,22 @@ def _import_mpi(quiet: bool = False):
 
 def _dummy_callback(_: Any) -> None:
     pass
+
+
+def _print_progress_line(console: Console, progress) -> None:
+    r"""Render the current progress state as one newline-terminated line and flush it.
+
+    mpiexec/mpirun forward each rank's output line-by-line rather than byte-by-byte,
+    so a normal rich ``Live`` display (which redraws in place via ``\\r``, only ever
+    emitting a real newline once the bar completes) sits fully buffered until the
+    whole run finishes. Printing one complete, flushed line per update sidesteps that
+    -- it trades in-place redraw for a scrolling log of styled lines, but it's the
+    only way to get live feedback under mpiexec.
+    """
+    with console.capture() as capture:
+        console.print(progress)
+    console.file.write(capture.get().rstrip("\n") + "\n")
+    console.file.flush()
 
 
 class MPIPool(BasePool):
@@ -157,33 +175,40 @@ class MPIPool(BasePool):
         resultlist: list = [None] * len(tasklist)
         pending = len(tasklist)
 
-        with make_progress(disable=disable) as progress:
-            task_id = progress.add_task(desc, total=total)
+        # A normal `with make_progress(...) as progress:` live display doesn't work
+        # here -- see `_print_progress_line`'s docstring. Instead, build the Progress
+        # renderer without starting its Live display, and print one flushed line per
+        # update.
+        console = Console(file=sys.stderr, force_terminal=True)
+        progress = make_progress(disable=disable, console=console)
+        task_id = progress.add_task(desc, total=total)
 
-            while pending:
-                if workerset and tasklist:
-                    worker = workerset.pop()
-                    taskid, task = tasklist.pop()
-                    self.comm.send(task, dest=worker, tag=taskid)
+        while pending:
+            if workerset and tasklist:
+                worker = workerset.pop()
+                taskid, task = tasklist.pop()
+                self.comm.send(task, dest=worker, tag=taskid)
 
-                if tasklist:
-                    flag = self.comm.Iprobe(source=mpi.ANY_SOURCE, tag=mpi.ANY_TAG)
-                    if not flag:
-                        continue
-                else:
-                    self.comm.Probe(source=mpi.ANY_SOURCE, tag=mpi.ANY_TAG)
+            if tasklist:
+                flag = self.comm.Iprobe(source=mpi.ANY_SOURCE, tag=mpi.ANY_TAG)
+                if not flag:
+                    continue
+            else:
+                self.comm.Probe(source=mpi.ANY_SOURCE, tag=mpi.ANY_TAG)
 
-                status = mpi.Status()
-                result = self.comm.recv(source=mpi.ANY_SOURCE, tag=mpi.ANY_TAG, status=status)
-                worker = status.source
-                taskid = status.tag
+            status = mpi.Status()
+            result = self.comm.recv(source=mpi.ANY_SOURCE, tag=mpi.ANY_TAG, status=status)
+            worker = status.source
+            taskid = status.tag
 
-                user_callback(result)
-                progress.advance(task_id)
+            user_callback(result)
+            progress.advance(task_id)
+            if not disable:
+                _print_progress_line(console, progress)
 
-                workerset.add(worker)
-                resultlist[taskid] = result
-                pending -= 1
+            workerset.add(worker)
+            resultlist[taskid] = result
+            pending -= 1
 
         return resultlist
 

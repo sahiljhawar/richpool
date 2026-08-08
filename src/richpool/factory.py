@@ -29,7 +29,8 @@ def choose_pool(
 
         if not MPIPool.enabled():
             raise SystemError(
-                "Tried to run with MPI but MPIPool is not enabled."
+                "Tried to run with MPI but MPIPool is not enabled. "
+                "Try running by appending mpiexec/mpirun, e.g. `mpiexec -n 4 python script.py`."
             )
 
         return MPIPool(**kwargs)

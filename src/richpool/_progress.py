@@ -1,6 +1,7 @@
 """Shared rich progress bar construction for richpool."""
 
 
+from rich.console import Console
 from rich.progress import (
     BarColumn,
     MofNCompleteColumn,
@@ -12,8 +13,16 @@ from rich.progress import (
 )
 
 
-def make_progress(disable: bool = False) -> Progress:
-    """Build a rich Progress instance with p_tqdm-like columns."""
+def make_progress(disable: bool = False, console: Console | None = None) -> Progress:
+    """Build a rich Progress instance with p_tqdm-like columns.
+
+    Parameters
+    ----------
+    disable : bool, optional
+        Suppress the progress display entirely.
+    console : rich.console.Console, optional
+        Console to render to. Defaults to rich's global console.
+    """
     return Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -23,6 +32,7 @@ def make_progress(disable: bool = False) -> Progress:
         TimeElapsedColumn(),
         TimeRemainingColumn(),
         disable=disable,
+        console=console,
     )
 
 
