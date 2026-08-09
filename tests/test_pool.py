@@ -1,6 +1,6 @@
 import pytest
 
-from richpool import JoblibPool, MultiPool, SerialPool, choose_pool
+from richpool import BasePool, JoblibPool, MultiPool, SerialPool, choose_pool
 
 
 def square(x):
@@ -75,6 +75,28 @@ def test_is_master(pool):
     assert not pool.is_worker()
 
 
+def test_wait_is_noop(pool):
+    assert pool.wait() is None
+
+
+def test_base_pool_enabled_default_false():
+    assert BasePool.enabled() is False
+
+
+def test_serial_enabled():
+    assert SerialPool.enabled() is True
+
+
+def test_joblib_enabled():
+    assert JoblibPool.enabled() is True
+
+
+def test_multipool_terminate_and_join():
+    pool = MultiPool(processes=2)
+    pool.terminate()
+    pool.join()
+
+
 @pytest.mark.parametrize("kind", _POOL_KINDS)
 def test_progress_bar_shown_by_default(kind, capsys):
     with _make_pool(kind) as p:
@@ -107,3 +129,15 @@ def test_call_disable_overrides_constructor_disable(kind, capsys):
     out = capsys.readouterr().out
     assert "probing" in out
     assert "100%" in out
+
+
+def test_base_pool_map_raises():
+    class DummyPool(BasePool):
+        def __init__(self):
+            super().__init__()
+
+        def map(self, func, iterable, callback=None, **kwargs):
+            return super().map(func, iterable, callback=callback, **kwargs)
+
+    with DummyPool() as pool, pytest.raises(NotImplementedError):
+        pool.map(square, range(4))

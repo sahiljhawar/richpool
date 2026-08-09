@@ -76,6 +76,18 @@ def test_num_cpus_float(func, is_generator, is_ordered):
 
 
 @pytest.mark.parametrize("func, is_generator, is_ordered", _VARIANTS)
+def test_num_cpus_int(func, is_generator, is_ordered):
+    result = _materialize(func(add_1, [1, 2, 3], num_cpus=2), is_generator)
+    assert sorted(result) == [2, 3, 4]
+
+
+@pytest.mark.parametrize("func, is_generator, is_ordered", _VARIANTS)
+def test_total_override(func, is_generator, is_ordered):
+    result = _materialize(func(add_1, [1, 2, 3], total=3), is_generator)
+    assert sorted(result) == [2, 3, 4]
+
+
+@pytest.mark.parametrize("func, is_generator, is_ordered", _VARIANTS)
 def test_disable(func, is_generator, is_ordered):
     result = _materialize(func(add_1, [1, 2, 3], disable=True), is_generator)
     assert sorted(result) == [2, 3, 4]
