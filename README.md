@@ -1,5 +1,12 @@
 # richpool
 
+|          |                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Versions | [![PyPI](https://badge.fury.io/py/richpool.svg)](https://pypi.org/project/richpool/) [![Python version](https://img.shields.io/pypi/pyversions/richpool.svg)](https://pypi.org/project/richpool/)                                                                                                                                                                                                                                                                           |
+| Status   | [![Tests](https://github.com/sahiljhawar/richpool/actions/workflows/tests.yml/badge.svg)](https://github.com/sahiljhawar/richpool/actions/workflows/tests.yml) [![Coverage Status](https://coveralls.io/repos/github/sahiljhawar/richpool/badge.svg)](https://coveralls.io/github/sahiljhawar/richpool) [![Docs](https://app.readthedocs.org/projects/richpool/badge/?version=latest)](https://richpool.readthedocs.io/en/latest/)                                          |
+| Tools    | [![Pre-Commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff) [![ty](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ty/main/assets/badge/v0.json)](https://github.com/astral-sh/ty) |
+| License  | [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)                                                                                                                                                                                                                                                                                                                                                                   |
+
 `richpool` is a kind of fork that mixes both [`p_tqdm`](https://github.com/swansonk14/p_tqdm) and [`schwimmbad`](https://github.com/adrn/schwimmbad) into one standalone library, with progress bars rendered natively by [`rich`](https://github.com/Textualize/rich) instead of `tqdm`. It has no dependency on `tqdm`, `p_tqdm`, or `schwimmbad`.
 
 Since, both `p_tqdm` and `schwimmbad` are effectively unmaintained, `richpool` reimplements what both projects offer, aiming to be the successor to both, with the added functionality of a native `rich` progress bar.
@@ -11,7 +18,7 @@ It gives you two ways to run parallel work, both with a rich progress bar by def
 
 ## Installation
 
-```uv pip install richpool```
+`uv pip install richpool`
 
 `MPIPool` needs `mpi4py` (also needs a system MPI, e.g. OpenMPI/MPICH) installed too. Everything else (`SerialPool`, `MultiPool`, `JoblibPool`, the functional API) works out of the box:
 
@@ -34,9 +41,9 @@ with choose_pool(processes=4) as pool:
 
 `choose_pool(mpi=False, processes=1, **kwargs)` picks a pool:
 
-* `mpi=True` picks `MPIPool`
-* `processes != 1` picks `MultiPool` (backed by `pathos.multiprocessing.ProcessPool`)
-* otherwise picks `SerialPool`
+- `mpi=True` picks `MPIPool`
+- `processes != 1` picks `MultiPool` (backed by `pathos.multiprocessing.ProcessPool`)
+- otherwise picks `SerialPool`
 
 All four pool classes share the same `.map()` interface:
 
@@ -44,10 +51,10 @@ All four pool classes share the same `.map()` interface:
 pool.map(func, iterable, callback=None, desc="", total=None, disable=False)
 ```
 
-* `callback`: optional, called on the master process with each individual result as it completes (same contract as schwimmbad's `callback`).
-* `desc`: progress bar description.
-* `total`: override the progress bar total (inferred from `len(iterable)` when omitted).
-* `disable`: suppress the progress bar.
+- `callback`: optional, called on the master process with each individual result as it completes (same contract as schwimmbad's `callback`).
+- `desc`: progress bar description.
+- `total`: override the progress bar total (inferred from `len(iterable)` when omitted).
+- `disable`: suppress the progress bar.
 
 You can also instantiate pools directly:
 
@@ -101,9 +108,9 @@ p_umap(add, [1, 2, 3], [10, 20, 30])  # parallel, unordered: e.g. [22, 11, 33]
 t_map(add, [1, 2, 3], [10, 20, 30])  # sequential, ordered: [11, 22, 33]
 ```
 
-* `p_map` / `p_imap`: parallel ordered map / iterator.
-* `p_umap` / `p_uimap`: parallel unordered map / iterator (results as they complete).
-* `t_map` / `t_imap`: sequential map / iterator.
+- `p_map` / `p_imap`: parallel ordered map / iterator.
+- `p_umap` / `p_uimap`: parallel unordered map / iterator (results as they complete).
+- `t_map` / `t_imap`: sequential map / iterator.
 
 All accept `num_cpus` (int, or float as a proportion of available CPUs), `total`, `desc`, `disable`, and `chunksize` keyword arguments.
 
