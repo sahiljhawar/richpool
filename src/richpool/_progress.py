@@ -1,5 +1,7 @@
 """Shared rich progress bar construction for richpool."""
 
+from collections.abc import Sequence
+
 from rich.console import Console
 from rich.progress import (
     BarColumn,
@@ -35,10 +37,7 @@ def make_progress(disable: bool = False, console: Console | None = None) -> Prog
     )
 
 
-def resolve_total(total: int | None, iterable) -> int | None:
+def resolve_total(total: int | None, iterable: Sequence) -> int | None:
     if total is not None:
         return total
-    try:
-        return len(iterable)
-    except TypeError:
-        return None
+    return len(iterable)
