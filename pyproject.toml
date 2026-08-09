@@ -18,7 +18,14 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = ["pathos>=0.3.0", "rich>=13.0.0", "joblib", "pytest"]
+dependencies = [
+    "pathos>=0.3.0",
+    "rich>=13.0.0",
+    "joblib",
+    "pytest",
+    "ty",
+    "ruff",
+]
 
 [project.optional-dependencies]
 mpi = ["mpi4py"]
@@ -28,6 +35,8 @@ docs = [
     "myst-parser",
     "sphinx-exec-code",
     "sphinx_copybutton",
+    "matplotlib>=3.11.1",
+    "emcee>=3.1.6",
 ]
 
 [project.urls]

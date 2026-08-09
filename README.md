@@ -56,8 +56,8 @@ from richpool import SerialPool, MultiPool, JoblibPool, MPIPool
 
 SerialPool()
 MultiPool(processes=8)
-JoblibPool(processes=8, backend="loky")   # any joblib.Parallel kwargs
-MPIPool()                                 # run script with: mpiexec -n 4 python script.py
+JoblibPool(processes=8, backend="loky")  # any joblib.Parallel kwargs
+MPIPool()  # run script with: mpiexec -n 4 python script.py
 ```
 
 ### MPIPool notes
@@ -67,8 +67,10 @@ MPIPool()                                 # run script with: mpiexec -n 4 python
 ```python
 from richpool import choose_pool
 
+
 def square(x):
     return x * x
+
 
 with choose_pool(mpi=True) as pool:
     if pool.is_master():
@@ -89,12 +91,14 @@ No pool to create, just call the function:
 ```python
 from richpool import p_map, p_umap, t_map
 
+
 def add(a, b):
     return a + b
 
-p_map(add, [1, 2, 3], [10, 20, 30])          # parallel, ordered:   [11, 22, 33]
-p_umap(add, [1, 2, 3], [10, 20, 30])         # parallel, unordered: e.g. [22, 11, 33]
-t_map(add, [1, 2, 3], [10, 20, 30])          # sequential, ordered: [11, 22, 33]
+
+p_map(add, [1, 2, 3], [10, 20, 30])  # parallel, ordered:   [11, 22, 33]
+p_umap(add, [1, 2, 3], [10, 20, 30])  # parallel, unordered: e.g. [22, 11, 33]
+t_map(add, [1, 2, 3], [10, 20, 30])  # sequential, ordered: [11, 22, 33]
 ```
 
 * `p_map` / `p_imap`: parallel ordered map / iterator.
@@ -107,8 +111,10 @@ All accept `num_cpus` (int, or float as a proportion of available CPUs), `total`
 from functools import partial
 from richpool import p_map
 
+
 def add(a, b, c=0):
     return a + b + c
+
 
 p_map(partial(add, c=1), [1, 2, 3], [10, 20, 30], num_cpus=0.5, desc="adding")
 ```

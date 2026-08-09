@@ -1,6 +1,5 @@
 """Shared rich progress bar construction for richpool."""
 
-
 from rich.console import Console
 from rich.progress import (
     BarColumn,

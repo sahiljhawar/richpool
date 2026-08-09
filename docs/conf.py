@@ -22,6 +22,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx_exec_code",
     "sphinx_copybutton",
+    "matplotlib.sphinxext.plot_directive",
 ]
 
 root_doc = "index"
@@ -51,6 +52,10 @@ napoleon_google_docstring = False
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
 }
+
+plot_formats = ["png"]
+plot_html_show_source_link = False
+plot_html_show_formats = False
 
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
