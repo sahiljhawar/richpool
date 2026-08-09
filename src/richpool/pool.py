@@ -8,9 +8,10 @@ from typing import Any
 class BasePool(metaclass=abc.ABCMeta):
     """A base class for pools exposing a uniform ``map`` interface with a rich progress bar."""
 
-    def __init__(self, **_: Any):
+    def __init__(self, disable: bool = False, **_: Any):
         self.rank = 0
         self.size = 0
+        self.disable = disable
 
     @staticmethod
     def enabled() -> bool:

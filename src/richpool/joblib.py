@@ -26,6 +26,9 @@ class JoblibPool(BasePool):
         Not used by `JoblibPool`. Accepted for the same reason.
     comm : mpi4py.MPI.Comm, optional
         Not used by `JoblibPool`. Accepted for the same reason.
+    disable : bool, optional
+        Default for ``map()``'s ``disable`` argument; suppresses the progress
+        bar on every call unless a call overrides it explicitly.
     **kwargs
         Additional keyword arguments passed directly to ``joblib.Parallel.__init__``
         (e.g. ``backend``, ``prefer``).
@@ -37,9 +40,10 @@ class JoblibPool(BasePool):
         initializer: Callable | None = None,
         initargs: tuple | None = None,
         comm: Any = None,
+        disable: bool = False,
         **kwargs: Any,
     ):
-        super().__init__()
+        super().__init__(disable=disable)
         self.kwargs = {"n_jobs": processes, **kwargs}
 
     @staticmethod
@@ -74,7 +78,7 @@ class JoblibPool(BasePool):
         """
         desc: str = kwargs.pop("desc", "")
         total: int | None = kwargs.pop("total", None)
-        disable: bool = kwargs.pop("disable", False)
+        disable: bool = kwargs.pop("disable", self.disable)
         items = list(iterable)
         total = resolve_total(total, items)
 

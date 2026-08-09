@@ -25,6 +25,9 @@ class SerialPool(BasePool):
         Not used by `SerialPool`. Accepted for the same reason.
     comm : mpi4py.MPI.Comm, optional
         Not used by `SerialPool`. Accepted for the same reason.
+    disable : bool, optional
+        Default for ``map()``'s ``disable`` argument; suppresses the progress
+        bar on every call unless a call overrides it explicitly.
     """
 
     def __init__(
@@ -33,9 +36,10 @@ class SerialPool(BasePool):
         initializer: Callable | None = None,
         initargs: tuple | None = None,
         comm: Any = None,
+        disable: bool = False,
         **_: Any,
     ):
-        super().__init__()
+        super().__init__(disable=disable)
 
     @staticmethod
     def enabled() -> bool:
@@ -69,7 +73,7 @@ class SerialPool(BasePool):
         """
         desc: str = kwargs.pop("desc", "")
         total: int | None = kwargs.pop("total", None)
-        disable: bool = kwargs.pop("disable", False)
+        disable: bool = kwargs.pop("disable", self.disable)
         items = list(iterable)
         total = resolve_total(total, items)
 

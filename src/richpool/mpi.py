@@ -81,6 +81,9 @@ class MPIPool(BasePool):
         Not used by `MPIPool`. Accepted for the same reason.
     initargs : tuple, optional
         Not used by `MPIPool`. Accepted for the same reason.
+    disable : bool, optional
+        Default for ``map()``'s ``disable`` argument; suppresses the progress
+        bar on every call unless a call overrides it explicitly.
     """
 
     def __init__(
@@ -89,9 +92,10 @@ class MPIPool(BasePool):
         processes: int | None = None,
         initializer: Callable | None = None,
         initargs: tuple | None = None,
+        disable: bool = False,
         **_: Any,
     ):
-        super().__init__()
+        super().__init__(disable=disable)
         self._mpi = _import_mpi()
 
         import dill
@@ -185,7 +189,7 @@ class MPIPool(BasePool):
         """
         desc: str = kwargs.pop("desc", "")
         total: int | None = kwargs.pop("total", None)
-        disable: bool = kwargs.pop("disable", False)
+        disable: bool = kwargs.pop("disable", self.disable)
         if not self.is_master():
             self.wait()
             return None

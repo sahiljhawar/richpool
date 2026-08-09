@@ -50,6 +50,11 @@ class MultiPool(BasePool):
     comm : mpi4py.MPI.Comm, optional
         Not used by `MultiPool`. Accepted so `choose_pool()` can construct any
         pool backend with the same call, regardless of which one gets picked.
+    disable : bool, optional
+        Default for ``map()``'s ``disable`` argument; suppresses the progress
+        bar on every call unless a call overrides it explicitly. Useful when
+        another library (e.g. emcee) calls ``map()`` many times internally
+        and you'd rather track overall progress yourself.
     """
 
     wait_timeout = 3600
@@ -60,9 +65,10 @@ class MultiPool(BasePool):
         initializer: Callable | None = None,
         initargs: tuple = (),
         comm: Any = None,
+        disable: bool = False,
         **kwargs: Any,
     ):
-        super().__init__()
+        super().__init__(disable=disable)
         new_initializer = functools.partial(_initializer_wrapper, initializer)
         self._pool = ProcessPool(
             processes, initializer=new_initializer, initargs=initargs, **kwargs
@@ -104,7 +110,7 @@ class MultiPool(BasePool):
         """
         desc: str = kwargs.pop("desc", "")
         total: int | None = kwargs.pop("total", None)
-        disable: bool = kwargs.pop("disable", False)
+        disable: bool = kwargs.pop("disable", self.disable)
         items = list(iterable)
         total = resolve_total(total, items)
 
@@ -112,9 +118,7 @@ class MultiPool(BasePool):
             task_id = progress.add_task(desc, total=total)
             tick = _CallbackWrapper(progress, task_id, callback)
 
-            async_result = self._pool.amap(
-                func, items, chunksize=chunksize, callback=tick
-            )
+            async_result = self._pool.amap(func, items, chunksize=chunksize, callback=tick)
 
             while True:
                 try:
