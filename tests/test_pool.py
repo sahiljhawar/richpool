@@ -18,6 +18,13 @@ def test_choose_pool_processes_many_returns_multi():
     pool.close()
 
 
+def test_choose_pool_mpi_not_enabled_raises():
+    # Not launched via mpiexec, so MPIPool.enabled() is False here regardless
+    # of whether mpi4py is installed (COMM_WORLD.size == 1, or mpi4py absent).
+    with pytest.raises(SystemError, match="MPIPool is not enabled"):
+        choose_pool(mpi=True)
+
+
 def _make_pool(kind, disable=False):
     if kind == "serial":
         return SerialPool(disable=disable)
