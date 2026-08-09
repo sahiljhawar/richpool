@@ -70,10 +70,10 @@ class MultiPool(BasePool):
     ):
         super().__init__(disable=disable)
         new_initializer = functools.partial(_initializer_wrapper, initializer)
-        self._pool = ProcessPool(
-            processes, initializer=new_initializer, initargs=initargs, **kwargs
-        )
-        self.size = self._pool.nodes
+        if processes is not None:
+            kwargs["ncpus"] = processes
+        self._pool = ProcessPool(initializer=new_initializer, initargs=initargs, **kwargs)
+        self.size: int | None = self._pool.nodes
 
     @staticmethod
     def enabled() -> bool:

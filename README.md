@@ -31,8 +31,10 @@ uv pip install "richpool[mpi]"
 ```python
 from richpool import choose_pool
 
+
 def square(x):
     return x * x
+
 
 with choose_pool(processes=4) as pool:
     results = pool.map(square, range(20), desc="squaring")

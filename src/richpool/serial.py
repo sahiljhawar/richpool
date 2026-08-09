@@ -40,6 +40,7 @@ class SerialPool(BasePool):
         **_: Any,
     ):
         super().__init__(disable=disable)
+        self.size = 1
 
     @staticmethod
     def enabled() -> bool:

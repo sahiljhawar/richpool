@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from richpool import BasePool, JoblibPool, MultiPool, SerialPool, choose_pool
@@ -25,13 +27,23 @@ def test_choose_pool_mpi_not_enabled_raises():
         choose_pool(mpi=True)
 
 
-def _make_pool(kind, disable=False):
+def _make_pool_with_num_processes(kind, disable=False):
     if kind == "serial":
         return SerialPool(disable=disable)
     if kind == "multi":
         return MultiPool(processes=2, disable=disable)
     if kind == "joblib":
-        return JoblibPool(n_jobs=2, disable=disable)
+        return JoblibPool(processes=2, disable=disable)
+    raise ValueError(kind)
+
+
+def _make_pool_with_none_processes(kind, disable=False):
+    if kind == "serial":
+        return SerialPool(disable=disable)
+    if kind == "multi":
+        return MultiPool(processes=None, disable=disable)
+    if kind == "joblib":
+        return JoblibPool(processes=None, disable=disable)
     raise ValueError(kind)
 
 
@@ -40,11 +52,11 @@ _POOL_KINDS = ["serial", "multi", "joblib"]
 
 @pytest.fixture(params=_POOL_KINDS)
 def pool(request):
-    with _make_pool(request.param) as p:
+    with _make_pool_with_num_processes(request.param) as p:
         yield p
 
 
-def test_map_basic(pool):
+def test_map_basic(pool: BasePool):
     result = pool.map(square, range(6))
     assert result == [0, 1, 4, 9, 16, 25]
 
@@ -97,9 +109,19 @@ def test_multipool_terminate_and_join():
     pool.join()
 
 
+def test_pool_size(pool: BasePool):
+    match pool:
+        case SerialPool():
+            assert pool.size == 1
+        case MultiPool():
+            assert pool.size == 2
+        case JoblibPool():
+            assert pool.size == 2
+
+
 @pytest.mark.parametrize("kind", _POOL_KINDS)
 def test_progress_bar_shown_by_default(kind, capsys):
-    with _make_pool(kind) as p:
+    with _make_pool_with_num_processes(kind) as p:
         p.map(square, range(4), desc="probing")
     out = capsys.readouterr().out
     assert "probing" in out
@@ -108,7 +130,7 @@ def test_progress_bar_shown_by_default(kind, capsys):
 
 @pytest.mark.parametrize("kind", _POOL_KINDS)
 def test_progress_bar_hidden_by_call_disable(kind, capsys):
-    with _make_pool(kind) as p:
+    with _make_pool_with_num_processes(kind) as p:
         p.map(square, range(4), desc="probing", disable=True)
     out = capsys.readouterr().out
     assert out == ""
@@ -116,7 +138,7 @@ def test_progress_bar_hidden_by_call_disable(kind, capsys):
 
 @pytest.mark.parametrize("kind", _POOL_KINDS)
 def test_progress_bar_hidden_by_constructor_disable(kind, capsys):
-    with _make_pool(kind, disable=True) as p:
+    with _make_pool_with_num_processes(kind, disable=True) as p:
         p.map(square, range(4), desc="probing")
     out = capsys.readouterr().out
     assert out == ""
@@ -124,7 +146,7 @@ def test_progress_bar_hidden_by_constructor_disable(kind, capsys):
 
 @pytest.mark.parametrize("kind", _POOL_KINDS)
 def test_call_disable_overrides_constructor_disable(kind, capsys):
-    with _make_pool(kind, disable=True) as p:
+    with _make_pool_with_num_processes(kind) as p:
         p.map(square, range(4), desc="probing", disable=False)
     out = capsys.readouterr().out
     assert "probing" in out
@@ -141,3 +163,19 @@ def test_base_pool_map_raises():
 
     with DummyPool() as pool, pytest.raises(NotImplementedError):
         pool.map(square, range(4))
+
+
+@pytest.fixture(params=_POOL_KINDS)
+def none_pool(request):
+    with _make_pool_with_none_processes(request.param) as p:
+        yield p
+
+
+def test_pool_size_none_processes(none_pool: BasePool):
+    match none_pool:
+        case SerialPool():
+            assert none_pool.size == 1
+        case MultiPool():
+            assert none_pool.size == os.cpu_count()
+        case JoblibPool():
+            assert none_pool.size == -1

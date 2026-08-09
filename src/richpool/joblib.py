@@ -44,7 +44,8 @@ class JoblibPool(BasePool):
         **kwargs: Any,
     ):
         super().__init__(disable=disable)
-        self.kwargs = {"n_jobs": processes, **kwargs}
+        self.kwargs = {**kwargs}
+        self.size = processes if processes is not None else -1
 
     @staticmethod
     def enabled() -> bool:
@@ -84,7 +85,7 @@ class JoblibPool(BasePool):
 
         kwargs = dict(self.kwargs)
         kwargs["return_as"] = "generator"
-        parallel = Parallel(**kwargs)
+        parallel = Parallel(self.size, **kwargs)
 
         results = []
         with make_progress(disable=disable) as progress:
