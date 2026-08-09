@@ -1,4 +1,5 @@
 ```{include} ../README.md
+
 ```
 
 ```{toctree}
@@ -7,4 +8,5 @@
 
 api
 examples
+changelog
 ```

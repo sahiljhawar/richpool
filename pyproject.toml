@@ -38,6 +38,7 @@ docs = [
     "sphinx_copybutton",
     "matplotlib>=3.11.1",
     "emcee>=3.1.6",
+    "sphinx-github-changelog",
 ]
 
 [project.urls]

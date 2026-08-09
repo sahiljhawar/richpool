@@ -23,6 +23,7 @@ extensions = [
     "sphinx_exec_code",
     "sphinx_copybutton",
     "matplotlib.sphinxext.plot_directive",
+    "sphinx_github_changelog",
 ]
 
 root_doc = "index"
