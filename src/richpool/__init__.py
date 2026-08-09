@@ -8,7 +8,7 @@ from richpool.multi import MultiPool
 from richpool.pool import BasePool
 from richpool.serial import SerialPool
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 __all__ = [
     "__version__",
