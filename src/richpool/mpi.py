@@ -31,7 +31,7 @@ MPI = None
 def _import_mpi(quiet: bool = False):
     global MPI
     try:
-        from mpi4py import MPI as _MPI
+        from mpi4py import MPI as _MPI  # ty: ignore[unresolved-import]
 
         MPI = _MPI
     except ImportError as e:

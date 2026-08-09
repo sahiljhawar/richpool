@@ -9,9 +9,7 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
 keywords = ["rich", "progress bar", "parallel", "multiprocessing"]
-authors = [
-    { name = "Sahil Jhawar" },
-]
+authors = [{ name = "Sahil Jhawar" }]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -20,15 +18,17 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = [
-    "pathos>=0.3.0",
-    "rich>=13.0.0",
-    "joblib",
-    "pytest",
-]
+dependencies = ["pathos>=0.3.0", "rich>=13.0.0", "joblib", "pytest"]
 
 [project.optional-dependencies]
 mpi = ["mpi4py"]
+docs = [
+    "sphinx",
+    "pydata-sphinx-theme",
+    "myst-parser",
+    "sphinx-exec-code",
+    "sphinx_copybutton",
+]
 
 [project.urls]
 Homepage = "https://github.com/sahiljhawar/richpool"

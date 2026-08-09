@@ -113,10 +113,30 @@ def add(a, b, c=0):
 p_map(partial(add, c=1), [1, 2, 3], [10, 20, 30], num_cpus=0.5, desc="adding")
 ```
 
+## Examples
+
+Every pool and every functional map has a minimal, runnable example under [`examples/`](examples):
+
+```
+python examples/serial_pool_example.py
+python examples/multi_pool_example.py
+python examples/joblib_pool_example.py
+mpiexec -n 4 python examples/mpi_pool_example.py
+
+python examples/functional_pmap_example.py
+python examples/functional_pimap_example.py
+python examples/functional_pumap_example.py
+python examples/functional_puimap_example.py
+python examples/functional_tmap_example.py
+python examples/functional_timap_example.py
+```
+
+See them run with their real output, progress bar included, on the [examples page](https://richpool.readthedocs.io/en/latest/examples.html) of the docs.
+
 ## Credits
 
-Parts of `richpool`'s code and docs are adapted directly from [`schwimmbad`](https://github.com/adrn/schwimmbad) (Copyright (c) 2016 Adrian Price-Whelan) and [`p_tqdm`](https://github.com/swansonk14/p_tqdm) (Copyright (c) 2024 Kyle Swanson), both MIT licensed. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for their original license text.
+Parts of `richpool`'s code and docs are adapted directly from [`schwimmbad`](https://github.com/adrn/schwimmbad) (Copyright (c) 2016 Adrian Price-Whelan) and [`p_tqdm`](https://github.com/swansonk14/p_tqdm) (Copyright (c) 2024 Kyle Swanson), both MIT licensed. See [THIRD_PARTY_NOTICES.md](https://github.com/sahiljhawar/richpool/blob/main/THIRD_PARTY_NOTICES.md) for their original license text.
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+MIT, see [LICENSE](https://github.com/sahiljhawar/richpool/blob/main/LICENSE).
