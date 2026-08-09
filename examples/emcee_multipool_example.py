@@ -25,9 +25,9 @@ pip install emcee numpy matplotlib.
 
 import time
 
-import matplotlib.pyplot as plt
-import numpy as np
-from emcee import EnsembleSampler
+import matplotlib.pyplot as plt  # ty: ignore[unresolved-import]
+import numpy as np  # ty: ignore[unresolved-import]
+from emcee import EnsembleSampler  # ty: ignore[unresolved-import]
 from rich.progress import (
     BarColumn,
     MofNCompleteColumn,
