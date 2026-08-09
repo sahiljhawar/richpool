@@ -21,8 +21,8 @@ Every example below is executed as part of building the docs (via
 
 ## MultiPool with emcee
 
-Adapted from `schwimmbad`'s "Using MultiPool with emcee" example:
-https://schwimmbad.readthedocs.io/en/latest/examples/index.html#using-multipool-with-emcee
+Adapted from `schwimmbad`'s [Using MultiPool with emcee](https://schwimmbad.readthedocs.io/en/latest/examples/index.html#using-multipool-with-emcee) example:
+
 
 `emcee`'s `EnsembleSampler` accepts any pool object exposing a `.map()` method, so
 `richpool`'s `MultiPool` can be passed directly to parallelize likelihood
@@ -40,6 +40,7 @@ tracks real progress across the `n_steps` MCMC steps instead, while the
 likelihood evaluations for each step still run in parallel underneath it.
 
 Needs the extra `emcee`, `numpy`, and `matplotlib` dependencies:
+
 ```bash
 uv pip install emcee numpy matplotlib
 ```
