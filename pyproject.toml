@@ -53,6 +53,9 @@ where = ["src"]
 testpaths = ["tests"]
 addopts = "--verbose -ra"
 
+[tool.coverage.run]
+omit = ["src/richpool/mpi.py"]
+
 [tool.bumpver]
 current_version = "0.1.0"
 version_pattern = "MAJOR.MINOR.PATCH[PYTAGNUM]"
