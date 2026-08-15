@@ -114,7 +114,7 @@ t_map(add, [1, 2, 3], [10, 20, 30])  # sequential, ordered: [11, 22, 33]
 - `p_umap` / `p_uimap`: parallel unordered map / iterator (results as they complete).
 - `t_map` / `t_imap`: sequential map / iterator.
 
-All accept `num_cpus` (int, or float as a proportion of available CPUs), `total`, `desc`, `disable`, and `chunksize` keyword arguments.
+All accept `num_cpus` (int, or float as a proportion of available CPUs), `total`, `desc`, `disable`, and `chunksize` keyword arguments. The `p_*` functions also accept `kind` (`"process"` or `"thread"`, default `"process"`) to pick the underlying pool.
 
 ```python
 from functools import partial

@@ -27,6 +27,14 @@ _VARIANTS = [
     pytest.param(t_imap, True, True, id="t_imap"),
 ]
 
+# Only the p_* functions accept `kind` (t_map/t_imap are always sequential).
+_PARALLEL_VARIANTS = [
+    pytest.param(p_map, False, True, id="p_map"),
+    pytest.param(p_imap, True, True, id="p_imap"),
+    pytest.param(p_umap, False, False, id="p_umap"),
+    pytest.param(p_uimap, True, False, id="p_uimap"),
+]
+
 
 def _materialize(result, is_generator):
     return list(result) if is_generator else result
@@ -106,3 +114,33 @@ def test_progress_bar_hidden_by_disable(func, is_generator, is_ordered, capsys):
     _materialize(func(add_1, [1, 2, 3], desc="probing", disable=True), is_generator)
     out = capsys.readouterr().out
     assert out == ""
+
+
+@pytest.mark.parametrize("func, is_generator, is_ordered", _PARALLEL_VARIANTS)
+def test_kind_defaults_to_process(func, is_generator, is_ordered):
+    result = _materialize(func(add_1, [1, 2, 3]), is_generator)
+    _check(result, [2, 3, 4], is_ordered)
+
+
+@pytest.mark.parametrize("func, is_generator, is_ordered", _PARALLEL_VARIANTS)
+def test_kind_process(func, is_generator, is_ordered):
+    result = _materialize(func(add_1, [1, 2, 3], kind="process"), is_generator)
+    _check(result, [2, 3, 4], is_ordered)
+
+
+@pytest.mark.parametrize("func, is_generator, is_ordered", _PARALLEL_VARIANTS)
+def test_kind_thread(func, is_generator, is_ordered):
+    result = _materialize(func(add_1, [1, 2, 3], kind="thread"), is_generator)
+    _check(result, [2, 3, 4], is_ordered)
+
+
+@pytest.mark.parametrize("func, is_generator, is_ordered", _PARALLEL_VARIANTS)
+def test_kind_thread_multiple_iterables(func, is_generator, is_ordered):
+    result = _materialize(func(add_2, [1, 2, 3], [10, 11, 12], kind="thread"), is_generator)
+    _check(result, [11, 13, 15], is_ordered)
+
+
+@pytest.mark.parametrize("func, is_generator, is_ordered", _PARALLEL_VARIANTS)
+def test_kind_invalid_raises(func, is_generator, is_ordered):
+    with pytest.raises(ValueError, match="Invalid pool kind"):
+        _materialize(func(add_1, [1, 2, 3], kind="bogus"), is_generator)

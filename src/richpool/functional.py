@@ -10,14 +10,16 @@ t_imap:  Returns an iterator for a sequential map.
 
 import signal
 from collections.abc import Callable, Generator, Iterable, Sized
-from typing import Any
+from typing import Any, Literal
 
 from pathos.helpers import cpu_count
-from pathos.multiprocessing import ProcessPool
+from pathos.multiprocessing import ProcessPool, ThreadingPool
 
 from richpool._progress import make_progress
 
 __all__ = ["p_map", "p_imap", "p_umap", "p_uimap", "t_map", "t_imap"]
+
+KIND = Literal["process", "thread"]
 
 
 def _ignore_sigint() -> None:
@@ -45,6 +47,7 @@ def _parallel(
     ordered: bool,
     function: Callable,
     *iterables: Iterable,
+    kind: KIND = "process",
     **kwargs: Any,
 ) -> Generator:
     num_cpus = _num_processes(kwargs.pop("num_cpus", None))
@@ -57,7 +60,14 @@ def _parallel(
     # doesn't get consumed twice (once for length, once for mapping).
     materialized = [list(it) for it in iterables]
 
-    pool = ProcessPool(num_cpus, initializer=_ignore_sigint)
+    if kind == "process":
+        pool = ProcessPool(num_cpus, initializer=_ignore_sigint)
+    elif kind == "thread":
+        # signal.signal() only works in the main thread, so worker threads
+        # can't use the SIGINT-ignoring initializer that process workers use.
+        pool = ThreadingPool(num_cpus)
+    else:
+        raise ValueError(f"Invalid pool kind: {kind}")
     try:
         with make_progress(disable=disable) as progress:
             task_id = progress.add_task(desc, total=total)
@@ -72,24 +82,32 @@ def _parallel(
         pool.clear()
 
 
-def p_map(function: Callable, *iterables: Iterable, **kwargs: Any) -> list[Any]:
+def p_map(
+    function: Callable, *iterables: Iterable, kind: KIND = "process", **kwargs: Any
+) -> list[Any]:
     """Perform a parallel ordered map with a rich progress bar."""
-    return list(_parallel(True, function, *iterables, **kwargs))
+    return list(_parallel(True, function, *iterables, kind=kind, **kwargs))
 
 
-def p_imap(function: Callable, *iterables: Iterable, **kwargs: Any) -> Generator:
+def p_imap(
+    function: Callable, *iterables: Iterable, kind: KIND = "process", **kwargs: Any
+) -> Generator:
     """Return a generator for a parallel ordered map with a rich progress bar."""
-    return _parallel(True, function, *iterables, **kwargs)
+    return _parallel(True, function, *iterables, kind=kind, **kwargs)
 
 
-def p_umap(function: Callable, *iterables: Iterable, **kwargs: Any) -> list[Any]:
+def p_umap(
+    function: Callable, *iterables: Iterable, kind: KIND = "process", **kwargs: Any
+) -> list[Any]:
     """Perform a parallel unordered map with a rich progress bar."""
-    return list(_parallel(False, function, *iterables, **kwargs))
+    return list(_parallel(False, function, *iterables, kind=kind, **kwargs))
 
 
-def p_uimap(function: Callable, *iterables: Iterable, **kwargs: Any) -> Generator:
+def p_uimap(
+    function: Callable, *iterables: Iterable, kind: KIND = "process", **kwargs: Any
+) -> Generator:
     """Return a generator for a parallel unordered map with a rich progress bar."""
-    return _parallel(False, function, *iterables, **kwargs)
+    return _parallel(False, function, *iterables, kind=kind, **kwargs)
 
 
 def _sequential(function: Callable, *iterables: Iterable, **kwargs: Any) -> Generator:
