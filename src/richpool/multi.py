@@ -5,7 +5,6 @@ import signal
 from collections.abc import Callable, Iterable
 from typing import Any
 
-from pathos.helpers import mp
 from pathos.multiprocessing import ProcessPool
 
 from richpool._progress import make_progress, resolve_total
@@ -19,21 +18,6 @@ def _initializer_wrapper(actual_initializer, *rest):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     if actual_initializer is not None:
         actual_initializer(*rest)
-
-
-class _CallbackWrapper:
-    """Turns amap's per-chunk callback into per-item ticks on the progress bar."""
-
-    def __init__(self, progress, task_id, callback: Callable | None):
-        self.progress = progress
-        self.task_id = task_id
-        self.callback = callback
-
-    def __call__(self, chunk_results: Iterable[Any]) -> None:
-        for result in chunk_results:
-            if self.callback is not None:
-                self.callback(result)
-            self.progress.advance(self.task_id)
 
 
 class MultiPool(BasePool):
@@ -56,8 +40,6 @@ class MultiPool(BasePool):
         another library (e.g. emcee) calls ``map()`` many times internally
         and you'd rather track overall progress yourself.
     """
-
-    wait_timeout = 3600
 
     def __init__(
         self,
@@ -114,21 +96,22 @@ class MultiPool(BasePool):
         items = list(iterable)
         total = resolve_total(total, items)
 
+        # use imap to get better ETA stats instead of instant 0 to 100%
+        results = []
         with make_progress(disable=disable) as progress:
             task_id = progress.add_task(desc, total=total)
-            tick = _CallbackWrapper(progress, task_id, callback)
+            try:
+                for result in self._pool.imap(func, items, chunksize=chunksize or 1):
+                    if callback is not None:
+                        callback(result)
+                    results.append(result)
+                    progress.advance(task_id)
+            except KeyboardInterrupt:
+                self._pool.terminate()
+                self._pool.join()
+                raise
 
-            async_result = self._pool.amap(func, items, chunksize=chunksize, callback=tick)
-
-            while True:
-                try:
-                    return async_result.get(self.wait_timeout)
-                except mp.TimeoutError:  # ty: ignore[unresolved-attribute]
-                    continue
-                except KeyboardInterrupt:
-                    self._pool.terminate()
-                    self._pool.join()
-                    raise
+        return results
 
     def close(self) -> None:
         """Close the underlying process pool and release its workers."""
