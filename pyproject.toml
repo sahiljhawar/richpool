@@ -26,6 +26,7 @@ dependencies = [
     "pytest",
     "ty",
     "ruff",
+    "pre-commit>=4.6.2",
 ]
 
 [project.optional-dependencies]

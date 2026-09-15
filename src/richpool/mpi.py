@@ -6,10 +6,12 @@ progress bar and returns results. Run scripts using this pool via
 """
 
 import atexit
+import os
 import sys
+import time
 import traceback
 from collections.abc import Callable, Iterable
-from typing import Any
+from typing import Any, no_type_check
 
 from rich.console import Console
 
@@ -28,10 +30,11 @@ __all__ = ["MPIPool"]
 MPI = None
 
 
+@no_type_check
 def _import_mpi(quiet: bool = False):
     global MPI
     try:
-        from mpi4py import MPI as _MPI  # ty: ignore[unresolved-import]
+        from mpi4py import MPI as _MPI
 
         MPI = _MPI
     except ImportError as e:
@@ -44,19 +47,49 @@ def _dummy_callback(_: Any) -> None:
     pass
 
 
-def _print_progress_line(console: Console, progress) -> None:
-    r"""Render the current progress state as one newline-terminated line and flush it.
+_CURSOR_UP_AND_CLEAR = "\x1b[1A\x1b[2K"
+_MIN_REFRESH_INTERVAL = 0.1
+_MODE_ENV_VAR = "RICHPOOL_MPI_PROGRESS"
 
-    mpiexec/mpirun forward each rank's output line-by-line rather than byte-by-byte,
-    so a normal rich ``Live`` display (which redraws in place via ``\\r``, only ever
-    emitting a real newline once the bar completes) sits fully buffered until the
-    whole run finishes. Printing one complete, flushed line per update sidesteps that:
-    it trades in-place redraw for a scrolling log of styled lines, but it's the
-    only way to get live feedback under mpiexec.
+
+def _isatty(stream: Any) -> bool:
+    """Whether `stream` is attached to a terminal, tolerating detached/closed streams."""
+    try:
+        return bool(stream.isatty())
+    except (AttributeError, ValueError):
+        return False
+
+
+def _progress_mode(console: Console) -> str:
+    r"""Pick how to draw the bar: ``"inplace"`` (one redrawn line) or ``"lines"`` (a scrolling log).
+
+    Neither mode can use a normal rich ``Live`` display. mpiexec/mpirun forward a
+    rank's output line-by-line rather than byte-by-byte, so ``Live``'s ``\r``
+    redraw, which emits a real newline only once the bar completes, sits fully
+    buffered until the whole run finishes. Both modes here therefore write one
+    complete, flushed, newline-terminated line per update, which does get
+    forwarded promptly; ``"inplace"`` additionally prefixes each line after the
+    first with `_CURSOR_UP_AND_CLEAR`, collapsing the scroll back into a single
+    bar that updates in place.
+    """
+    override = os.environ.get(_MODE_ENV_VAR, "").strip().lower()
+    if override in ("inplace", "lines"):
+        return override
+    if _isatty(console.file):
+        return "inplace"
+    term = os.environ.get("TERM", "").strip().lower()
+    return "inplace" if term and term != "dumb" else "lines"
+
+
+def _print_progress_line(console: Console, progress, prefix: str = "") -> None:
+    """Render the current progress state as one newline-terminated line and flush it.
+
+    `prefix` is emitted before the rendered bar; `_progress_mode`'s ``"inplace"``
+    mode uses it to erase the previously drawn bar first.
     """
     with console.capture() as capture:
         console.print(progress)
-    console.file.write(capture.get().rstrip("\n") + "\n")
+    console.file.write(prefix + capture.get().rstrip("\n") + "\n")
     console.file.flush()
 
 
@@ -84,6 +117,12 @@ class MPIPool(BasePool):
     disable : bool, optional
         Default for ``map()``'s ``disable`` argument; suppresses the progress
         bar on every call unless a call overrides it explicitly.
+
+    Notes
+    -----
+    The progress bar can't use a normal rich ``Live`` display under mpiexec; see
+    `_progress_mode` for why, and for the ``RICHPOOL_MPI_PROGRESS`` environment
+    variable that overrides how it's drawn.
     """
 
     def __init__(
@@ -204,18 +243,16 @@ class MPIPool(BasePool):
         resultlist: list = [None] * len(tasklist)
         pending = len(tasklist)
 
-        # A normal `with make_progress(...) as progress:` live display doesn't work
-        # here, see `_print_progress_line`'s docstring. Instead, build the Progress
-        # renderer without starting its Live display, and print one flushed line per
-        # update. Printing on every single completed item would flood the output for
-        # large item counts, so updates are throttled to roughly one print per worker
-        # (`self.size`), a bounded number of lines regardless of how many items
-        # there are, always including the final, 100% line.
+        # In "inplace" mode each line erases the one before it.
+        # In "lines" mode every update scrolls.
         console = Console(file=sys.stderr, force_terminal=True)
         progress = make_progress(disable=disable, console=console)
         task_id = progress.add_task(desc, total=total)
+        mode = _progress_mode(console)
         print_every = max(1, -(-len(items) // self.size))
         completed = 0
+        drawn = False
+        last_draw = 0.0
 
         while pending:
             if workerset and tasklist:
@@ -243,7 +280,16 @@ class MPIPool(BasePool):
             pending -= 1
             completed += 1
 
-            if not disable and (completed % print_every == 0 or pending == 0):
+            if disable:
+                continue
+
+            if mode == "inplace":
+                now = time.monotonic()
+                if pending == 0 or now - last_draw >= _MIN_REFRESH_INTERVAL:
+                    _print_progress_line(console, progress, _CURSOR_UP_AND_CLEAR if drawn else "")
+                    drawn = True
+                    last_draw = now
+            elif completed % print_every == 0 or pending == 0:
                 _print_progress_line(console, progress)
 
         return resultlist

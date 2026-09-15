@@ -93,6 +93,22 @@ mpiexec -n 4 python script.py
 
 Needs at least 2 MPI ranks (1 master + >=1 worker).
 
+#### Progress bar rendering under mpiexec
+
+- **`inplace`** (default on a terminal): each line is prefixed with a cursor-up-and-erase
+  escape, so the bar redraws over itself and you see a single, live bar.
+- **`lines`** (default otherwise): plain lines with no escapes, throttled to roughly one
+  print per worker, so logs and CI output stay readable. This is what you get when the bar
+  is redirected to a file.
+
+The mode is autodetected from whether the output stream is a terminal, falling back to
+`TERM`. Override it with an environment variable:
+
+```
+RICHPOOL_MPI_PROGRESS=inplace mpiexec -n 4 python script.py   # force a single redrawn bar
+RICHPOOL_MPI_PROGRESS=lines   mpiexec -n 4 python script.py   # force the plain scrolling log
+```
+
 ## Functional interface (p_tqdm)
 
 No pool to create, just call the function:
