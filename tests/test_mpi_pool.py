@@ -26,10 +26,11 @@ pytestmark = pytest.mark.skipif(MPIEXEC is None, reason="no mpiexec/mpirun found
 
 def _run_proc(nprocs, disable=True, mode="lines"):
     assert MPIEXEC is not None
-    cmd = [MPIEXEC, "-n", str(nprocs)]
+    cmd = [MPIEXEC, "-n", str(nprocs), "--oversubscribe"]
     if hasattr(os, "geteuid") and os.geteuid() == 0:
         cmd.append("--allow-run-as-root")
     cmd += [sys.executable, str(WORKER_SCRIPT)]
+    print("Running command:", " ".join(cmd))
     env = os.environ.copy()
     env["RICHPOOL_TEST_DISABLE"] = "1" if disable else "0"
     env["RICHPOOL_MPI_PROGRESS"] = mode
