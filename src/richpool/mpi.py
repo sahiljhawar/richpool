@@ -11,7 +11,7 @@ import sys
 import time
 import traceback
 from collections.abc import Callable, Iterable
-from typing import Any
+from typing import Any, no_type_check
 
 from rich.console import Console
 
@@ -30,6 +30,7 @@ __all__ = ["MPIPool"]
 MPI = None
 
 
+@no_type_check
 def _import_mpi(quiet: bool = False):
     global MPI
     try:
