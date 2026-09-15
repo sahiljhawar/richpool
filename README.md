@@ -41,11 +41,13 @@ with choose_pool(processes=4) as pool:
 # results == [0, 1, 4, ..., 361]
 ```
 
-`choose_pool(mpi=False, processes=1, **kwargs)` picks a pool:
+`choose_pool(mpi=False, processes=1, pool=None, **kwargs)` picks a pool:
 
 - `mpi=True` picks `MPIPool`
-- `processes != 1` picks `MultiPool` (backed by `pathos.multiprocessing.ProcessPool`)
+- `processes != 1` picks `MultiPool` (backed by `pathos.multiprocessing.ProcessPool`), or `JoblibPool` if `pool="joblib"`
 - otherwise picks `SerialPool`
+
+`pool` is a richpool extension on top of schwimmbad's `choose_pool(mpi, processes, **kwargs)` signature: it defaults to `None`, which keeps the original schwimmbad-compatible behavior (`MultiPool`), so existing calls keep working unchanged. Pass `pool="joblib"` to opt into `JoblibPool` instead, and pass any `joblib.Parallel` kwarg (e.g. `backend="loky"` or `backend="threading"`) alongside it. `backend` is only meaningful for `JoblibPool`, so `choose_pool()` forwards it only when `pool="joblib"` and silently drops it for `SerialPool`/`MultiPool`/`MPIPool`.
 
 All four pool classes share the same `.map()` interface:
 

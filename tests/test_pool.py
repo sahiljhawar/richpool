@@ -27,6 +27,52 @@ def test_choose_pool_mpi_not_enabled_raises():
         choose_pool(mpi=True)
 
 
+def test_choose_pool_pool_joblib_returns_joblib():
+    pool = choose_pool(processes=2, pool="joblib")
+    assert isinstance(pool, JoblibPool)
+    pool.close()
+
+
+def test_choose_pool_pool_multi_returns_multi():
+    pool = choose_pool(processes=2, pool="multi")
+    assert isinstance(pool, MultiPool)
+    pool.close()
+
+
+def test_choose_pool_pool_ignored_when_processes_one():
+    pool = choose_pool(processes=1, pool="joblib")
+    assert isinstance(pool, SerialPool)
+
+
+def test_choose_pool_unknown_pool_raises():
+    with pytest.raises(ValueError, match="Unknown pool"):
+        choose_pool(processes=2, pool="bogus")
+
+
+@pytest.mark.parametrize("backend", ["loky", "threading"])
+def test_choose_pool_joblib_backend_kwarg(backend):
+    with choose_pool(processes=2, pool="joblib", backend=backend) as pool:
+        assert isinstance(pool, JoblibPool)
+        assert pool.kwargs["backend"] == backend
+        assert pool.map(square, range(5)) == [0, 1, 4, 9, 16]
+
+
+def test_choose_pool_multi_ignores_joblib_only_backend_kwarg():
+    with choose_pool(processes=2, pool="multi", backend="threading") as pool:
+        assert isinstance(pool, MultiPool)
+        assert pool.map(square, range(5)) == [0, 1, 4, 9, 16]
+
+
+def test_choose_pool_serial_ignores_joblib_only_backend_kwarg():
+    pool = choose_pool(processes=1, backend="threading")
+    assert isinstance(pool, SerialPool)
+
+
+def test_choose_pool_mpi_ignores_joblib_only_backend_kwarg():
+    with pytest.raises(SystemError, match="MPIPool is not enabled"):
+        choose_pool(mpi=True, backend="threading")
+
+
 def _make_pool_with_num_processes(kind, disable=False):
     if kind == "serial":
         return SerialPool(disable=disable)
