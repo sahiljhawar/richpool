@@ -51,7 +51,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv sync --extra mpi
-          uv pip install coverage coveralls pytest-cov
+          uv pip install coverage coveralls pytest-cov openmpi
 
       - name: Run tests
         run: uv run python -m coverage run --source richpool -m pytest -rf tests
